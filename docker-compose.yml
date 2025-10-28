@@ -1,6 +1,45 @@
-version: '3.8'
-
 services:
+  # -----------------------------
+  # Service Registry - Eureka
+  # -----------------------------
+  service-registry:
+    build:
+      context: .
+      dockerfile: ./service-registry/Dockerfile
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+
+  # -----------------------------
+  # Config Server - Spring Cloud Config
+  # -----------------------------
+  config-server:
+    build:
+      context: .
+      dockerfile: ./config-server/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+
+  # -----------------------------
+  # API Gateway - Spring Cloud Gateway
+  # -----------------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-registry
+      - config-server
+    environment:
+      - SPRING_APPLICATION_NAME=tbirpg2d-gateway
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+
   # -----------------------------
   # Distributed Tracing - Zipkin
   # -----------------------------
@@ -46,6 +85,8 @@ services:
     environment:
       - discovery.type=single-node
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=true
+      - xpack.security.enrollment.enabled=true
     ports:
       - "9200:9200"
     volumes:
