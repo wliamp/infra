@@ -7,6 +7,8 @@ import reactor.core.publisher.Mono;
 import io.wliamp.auth.compo.handler.CacheHandler;
 import io.wliamp.auth.dto.Tokens;
 
+import static reactor.core.publisher.Mono.*;
+
 @Service
 @RequiredArgsConstructor
 public class CacheService {
@@ -14,9 +16,9 @@ public class CacheService {
 
     public Mono<Tokens> loadUserToken(String key) {
         return cacheHandler.get(key, Object.class).flatMap(obj -> switch (obj) {
-            case Tokens token -> Mono.just(token);
-            case Map<?, ?> map -> Mono.just(new Tokens((String) map.get("access"), (String) map.get("refresh")));
-            case null, default -> Mono.empty();
+            case Tokens token -> just(token);
+            case Map<?, ?> map -> just(new Tokens((String) map.get("access"), (String) map.get("refresh")));
+            case null, default -> empty();
         });
     }
 }

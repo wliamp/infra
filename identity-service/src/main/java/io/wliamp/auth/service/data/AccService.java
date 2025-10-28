@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import io.wliamp.auth.entity.Acc;
 import io.wliamp.auth.repo.AccRepo;
-import io.wliamp.auth.util.Generator;
+
+import static io.wliamp.auth.entity.Acc.*;
+import static io.wliamp.auth.util.Generator.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class AccService {
 
     public Mono<Long> addNewAccount(String cred) {
         return accRepo.save(
-                        Acc.builder().code(Generator.generateCode(8)).cred(cred).build())
+                        builder().code(generateCode(8)).cred(cred).build())
                 .map(Acc::getId);
     }
 }

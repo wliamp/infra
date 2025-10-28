@@ -7,6 +7,9 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import io.wliamp.auth.service.authenticate.AuthenticateService;
 
+import static java.util.Objects.*;
+import static java.util.Optional.*;
+
 @Component
 @RequiredArgsConstructor
 public class RouteHandler {
@@ -19,34 +22,31 @@ public class RouteHandler {
     }
 
     public Mono<ServerResponse> login(ServerRequest request) {
-        String party = request.pathVariable("party");
+        var party = request.pathVariable("party");
         return request.bodyToMono(String.class)
                 .flatMap(external -> authenticateService.loginWithoutHeader(party, external))
                 .flatMap(responseHandler::buildTokenResponse);
     }
 
     public Mono<ServerResponse> relog(ServerRequest request) {
-        String token = request.headers().firstHeader("X-Refresh-Token");
-        if (token == null) {
-            return ServerResponse.badRequest().build();
-        }
-        return authenticateService.loginWithHeader(token).flatMap(responseHandler::buildTokenResponse);
+        var token = request.headers().firstHeader("X-Refresh-Token");
+        return ofNullable(token).map(s -> authenticateService.loginWithHeader(s).flatMap(responseHandler::buildTokenResponse)).orElseGet(() -> ServerResponse.badRequest().build());
     }
 
     public Mono<ServerResponse> link(ServerRequest request) {
-        String oldToken = request.headers().firstHeader("X-Refresh-Token");
-        String party = request.pathVariable("party");
+        var oldToken = request.headers().firstHeader("X-Refresh-Token");
+        var party = request.pathVariable("party");
         return request.bodyToMono(String.class)
                 .flatMap(newToken -> {
-                    assert oldToken != null;
+                    requireNonNull(oldToken);
                     return authenticateService.linkAccount(party, oldToken, newToken);
                 })
                 .flatMap(responseHandler::buildTokenResponse);
     }
 
     public Mono<ServerResponse> logout(ServerRequest request) {
-        String token = request.headers().firstHeader("X-Refresh-Token");
-        assert token != null;
+        var token = request.headers().firstHeader("X-Refresh-Token");
+        requireNonNull(token);
         return authenticateService.logout(token).then(ServerResponse.ok().build());
     }
 }

@@ -1,9 +1,10 @@
 package io.wliamp.auth.service.authenticate;
 
 import io.wliamp.auth.service.data.*;
-import io.wliamp.token.util.InternalToken;
+
 import java.time.Duration;
 import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +14,12 @@ import io.wliamp.auth.compo.handler.CacheHandler;
 import io.wliamp.auth.compo.helper.PartyHelper;
 import io.wliamp.auth.dto.Tokens;
 import io.wliamp.auth.entity.Acc;
-import io.wliamp.auth.util.Builder;
+
+import static io.wliamp.auth.util.Builder.*;
+import static java.lang.Math.*;
+import static java.lang.System.*;
+import static java.time.Duration.*;
+import static reactor.core.publisher.Mono.*;
 
 @Service
 @Slf4j
@@ -29,8 +35,6 @@ public class CommonService {
 
     private final AccScopeService accScopeService;
 
-    private final InternalToken internalToken;
-
     private final CacheHandler cacheHandler;
 
     @Value("${cache.ttl.days}")
@@ -39,44 +43,46 @@ public class CommonService {
     public Mono<Long> initAccountIfNotExists(String cred) {
         return accService
                 .getAccountByCred(cred)
-                .doOnNext(acc -> log.info("Found existing account for {}", cred))
+                .doOnNext(_ -> log.info("Found existing account for {}", cred))
                 .map(Acc::getId)
                 .switchIfEmpty(accService
                         .addNewAccount(cred)
-                        .flatMap(accId -> Mono.when(
-                                        accScopeService.addNewAccount(accId), accAudService.addNewAccount(accId))
+                        .flatMap(accId -> when(
+                                accScopeService.addNewAccount(accId),
+                                accAudService.addNewAccount(accId)
+                        )
                                 .thenReturn(accId))
                         .doOnNext(newId -> log.info("Created new account {} for {}", newId, cred)));
     }
 
     public Mono<Map<String, Object>> buildScopeAndAudiencesClaims(Long accId) {
-        return Mono.zip(
-                        scopeService.getScopesByAccountId(accId).collectList(),
-                        audService.getAudiencesByAccountId(accId).collectList())
-                .map(t -> Builder.buildTokenExtraClaims(t.getT1(), t.getT2()));
+        return zip(
+                scopeService.getScopesByAccountId(accId).collectList(),
+                audService.getAudiencesByAccountId(accId).collectList())
+                .map(t -> buildTokenExtraClaims(t.getT1(), t.getT2()));
     }
 
     public Mono<Tokens> loginFlow(String cred, PartyHelper partyHelper, String token) {
         return initAccountIfNotExists(cred)
                 .doOnNext(id -> log.info("AccountId = {}", id))
                 .flatMap(this::buildScopeAndAudiencesClaims)
-                .doOnNext(c -> log.info("Claims built"))
+                .doOnNext(_ -> log.info("Claims built"))
                 .flatMap(claims -> partyHelper.issueToken(token, claims))
-                .doOnNext(tk -> log.info("Token issued"))
+                .doOnNext(_ -> log.info("Token issued"))
                 .flatMap(userToken ->
                         cacheHandler.put("auth:" + cred, userToken, CACHE_TTL).thenReturn(userToken));
     }
 
     public Mono<Void> evictAndBlacklist(String subject, Tokens oldToken, String refreshToken) {
-        long now = System.currentTimeMillis() / 1000;
-        long accessExp = getExpClaim(oldToken.access());
-        long accessTTL = Math.max(0, accessExp - now);
-        long refreshExp = getExpClaim(refreshToken);
-        long refreshTTL = Math.max(0, refreshExp - now);
+        var now = currentTimeMillis() / 1000;
+        var accessExp = getExpClaim(oldToken.access());
+        var accessTTL = max(0, accessExp - now);
+        var refreshExp = getExpClaim(refreshToken);
+        var refreshTTL = max(0, refreshExp - now);
         return cacheHandler
                 .evict("auth:" + subject)
-                .then(cacheHandler.blacklistToken(oldToken.access(), Duration.ofSeconds(accessTTL)))
-                .then(cacheHandler.blacklistToken(refreshToken, Duration.ofSeconds(refreshTTL)))
+                .then(cacheHandler.blacklistToken(oldToken.access(), ofSeconds(accessTTL)))
+                .then(cacheHandler.blacklistToken(refreshToken, ofSeconds(refreshTTL)))
                 .then();
     }
 

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static reactor.core.publisher.Flux.fromIterable;
+import static reactor.core.publisher.Mono.*;
+
 @Component
 @RequiredArgsConstructor
 public class CacheHandler {
@@ -17,14 +20,14 @@ public class CacheHandler {
      * Put value with TTL
      */
     public <T> Mono<Boolean> put(String key, T value, Duration ttl) {
-        return redisTemplate.opsForValue().set(key, value, ttl).onErrorResume(e -> Mono.just(false));
+        return redisTemplate.opsForValue().set(key, value, ttl).onErrorResume(_ -> just(false));
     }
 
     /**
      * Put value without TTL (persist until evicted)
      */
     public <T> Mono<Boolean> put(String key, T value) {
-        return redisTemplate.opsForValue().set(key, value).onErrorResume(e -> Mono.just(false));
+        return redisTemplate.opsForValue().set(key, value).onErrorResume(_ -> just(false));
     }
 
     /**
@@ -95,7 +98,7 @@ public class CacheHandler {
      * Bulk delete keys
      */
     public Mono<Long> evictAll(Collection<String> keys) {
-        return redisTemplate.delete(Flux.fromIterable(keys));
+        return redisTemplate.delete(fromIterable(keys));
     }
 
     // =====================================================
@@ -106,15 +109,13 @@ public class CacheHandler {
      * Blacklist token (add to Redis with TTL)
      */
     public Mono<Boolean> blacklistToken(String token, Duration ttl) {
-        String key = "blacklist:" + token;
-        return put(key, true, ttl);
+        return put("blacklist:" + token, true, ttl);
     }
 
     /**
      * Check if token is blacklisted
      */
     public Mono<Boolean> isTokenBlacklisted(String token) {
-        String key = "blacklist:" + token;
-        return exists(key);
+        return exists("blacklist:" + token);
     }
 }

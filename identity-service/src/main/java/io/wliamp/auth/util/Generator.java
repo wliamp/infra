@@ -1,10 +1,10 @@
 package io.wliamp.auth.util;
 
-import java.util.UUID;
+import static java.util.UUID.randomUUID;
 
 public class Generator {
     public static String generateCode(int size) {
-        return UUID.randomUUID()
+        return randomUUID()
                 .toString()
                 .replace("-", "")
                 .replaceAll("[^A-Za-z0-9]", "")

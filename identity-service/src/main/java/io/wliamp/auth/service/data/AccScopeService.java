@@ -7,6 +7,9 @@ import io.wliamp.auth.entity.AccScope;
 import io.wliamp.auth.repo.AccScopeRepo;
 import io.wliamp.auth.repo.ScopeRepo;
 
+import static io.wliamp.auth.entity.AccScope.*;
+import static reactor.core.publisher.Flux.fromIterable;
+
 @Service
 @RequiredArgsConstructor
 public class AccScopeService {
@@ -18,8 +21,8 @@ public class AccScopeService {
         return scopeRepo
                 .findByStatusTrue()
                 .map(scope ->
-                        AccScope.builder().accId(accId).scopeId(scope.getId()).build())
+                        builder().accId(accId).scopeId(scope.getId()).build())
                 .collectList()
-                .flatMapMany(auds -> Flux.fromIterable(auds).flatMap(accScopeRepo::save));
+                .flatMapMany(auds -> fromIterable(auds).flatMap(accScopeRepo::save));
     }
 }

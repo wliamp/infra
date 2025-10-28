@@ -14,6 +14,5 @@ import org.springframework.stereotype.Component;
 public class BypassProperties {
     private List<String> bypassHeaders = new ArrayList<>();
 
-    ////        Optional:
     //    private Map<String, String> bypassTokens = new HashMap<>();
 }

@@ -1,11 +1,8 @@
 package io.wliamp.auth.config;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authorization.AuthorizationDecision;
@@ -14,8 +11,10 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
-import reactor.core.publisher.Mono;
 import io.wliamp.auth.compo.property.BypassProperties;
+
+import static java.util.List.*;
+import static reactor.core.publisher.Mono.*;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -23,7 +22,7 @@ import io.wliamp.auth.compo.property.BypassProperties;
 public class SecurityConfig {
     @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
-        return authentication -> Mono.just(new UsernamePasswordAuthenticationToken("test-user", "N/A", List.of()));
+        return _ -> just(new UsernamePasswordAuthenticationToken("test-user", "N/A", of()));
     }
 
     @Bean
@@ -45,12 +44,12 @@ public class SecurityConfig {
                 .authorizeExchange(
                         ex -> ex.pathMatchers("/auth/**")
                                 .access((authentication, context) -> {
-                                    ServerHttpRequest request =
+                                    var request =
                                             context.getExchange().getRequest();
-                                    HttpHeaders headers = request.getHeaders();
-                                    for (String header : bypassProperties.getBypassHeaders()) {
+                                    var headers = request.getHeaders();
+                                    for (var header : bypassProperties.getBypassHeaders()) {
                                         if (headers.containsKey(header)) {
-                                            return Mono.just(new AuthorizationDecision(true));
+                                            return just(new AuthorizationDecision(true));
                                             ////                              Optional:
                                             //                                    String expectedToken =
                                             // bypassProperties.getBypassTokens().get(header);
@@ -61,7 +60,7 @@ public class SecurityConfig {
                                             //                                    }
                                         }
                                     }
-                                    return Mono.justOrEmpty(authentication)
+                                    return justOrEmpty(authentication)
                                             .map(auth -> new AuthorizationDecision(true))
                                             .defaultIfEmpty(new AuthorizationDecision(false));
                                 })
@@ -71,7 +70,7 @@ public class SecurityConfig {
                         //                         .authenticated()
                         ////                        -> need to handle ReactiveAuthenticationManager,
                         // ServerSecurityContextRepository
-                        )
+                )
                 .build();
     }
 
