@@ -5,13 +5,12 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/wliamp/configurations.git
+          uri: https://github.com/wliamp/config.git
           username: wliamp
           password: ${GITHUB_TOKEN}
           default-label: main
           search-paths:
             - common
             - apps
-
 server:
   port: 8888

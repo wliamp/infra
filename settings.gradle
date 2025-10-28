@@ -1,18 +1,8 @@
 rootProject.name = 'infras'
 
-include 'gtw',
-    'config',
-    'idp',
-    'idp:authn',
-    'idp:authz',
-    'regis'
-
-project(':gtw').projectDir = file('api-gateway')
-
-project(':config').projectDir = file('config-server')
-
-project(':idp').projectDir = file('identity-provider')
-project(':idp:authn').projectDir = file('identity-provider/authentication')
-project(':idp:authz').projectDir = file('identity-provider/authorization')
-
-project(':regis').projectDir = file('service-registry')
+include 'api-gateway',
+    'config-server',
+    'identity-provider',
+    'identity-provider:authentication',
+    'identity-provider:authorization',
+    'service-registry'
