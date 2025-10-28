@@ -1,8 +1,6 @@
-rootProject.name = 'infras'
+rootProject.name = 'infra'
 
 include 'api-gateway',
     'config-server',
-    'identity-provider',
-    'identity-provider:authentication',
-    'identity-provider:authorization',
+    'identity-service',
     'service-registry'

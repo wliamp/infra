@@ -4,10 +4,6 @@ plugins {
     id 'io.spring.dependency-management'
 }
 
-bootJar {
-    archiveFileName = 'config.jar'
-}
-
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-config-server'
 }

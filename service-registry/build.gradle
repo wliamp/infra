@@ -4,10 +4,6 @@ plugins {
     id 'io.spring.dependency-management'
 }
 
-bootJar {
-    archiveFileName = 'regis.jar'
-}
-
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-server'
 }
