@@ -1,0 +1,144 @@
+services:
+  # -----------------------------
+  # Service Registry - Eureka
+  # -----------------------------
+  service-registry:
+    build:
+      context: .
+      dockerfile: ./service-registry/Dockerfile
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+
+  # -----------------------------
+  # Config Server - Spring Cloud Config
+  # -----------------------------
+  config-server:
+    build:
+      context: .
+      dockerfile: ./config-server/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+
+  # -----------------------------
+  # API Gateway - Spring Cloud Gateway
+  # -----------------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-registry
+      - config-server
+    environment:
+      - SPRING_APPLICATION_NAME=tbirpg2d-gateway
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+
+  # -----------------------------
+  # Distributed Tracing - Zipkin
+  # -----------------------------
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+
+  # -----------------------------
+  # Metrics - Prometheus
+  # -----------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  # -----------------------------
+  # Metrics Visualization - Grafana
+  # -----------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  # -----------------------------
+  # Logging - Elasticsearch
+  # -----------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=true
+      - xpack.security.enrollment.enabled=true
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  # -----------------------------
+  # Logging - Logstash
+  # -----------------------------
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.2
+    container_name: logstash
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5044:5044"      # beats input
+      - "5000:5000"      # TCP input
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+
+  # -----------------------------
+  # Logging - Kibana
+  # -----------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:3.5
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+
+volumes:
+  grafana-data:
+  es-data:

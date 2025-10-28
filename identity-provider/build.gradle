@@ -1,0 +1,21 @@
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+        implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.boot:spring-boot-starter-webflux'
+        implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+        compileOnly 'org.projectlombok:lombok'
+        runtimeOnly 'org.postgresql:postgresql'
+        runtimeOnly 'org.postgresql:r2dbc-postgresql'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'io.projectreactor:reactor-test'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
