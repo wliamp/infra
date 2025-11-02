@@ -1,6 +1,0 @@
-rootProject.name = 'infra'
-
-include 'api-gateway',
-    'config-server',
-    'identity-service',
-    'service-registry'
