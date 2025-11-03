@@ -1,100 +1,123 @@
 version: "3.9"
 services:
-    postgres:
-        image: postgres:17-alpine
-        container_name: postgres
-        environment:
-            - POSTGRES_USER=dev
-            - POSTGRES_PASSWORD=dev
-            - POSTGRES_DB=appdb
-        ports:
-            - "5432:5432"
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-    mongodb:
-        image: mongo:7.0
-        container_name: mongodb
-        restart: unless-stopped
-        environment:
-            - MONGO_INITDB_ROOT_USERNAME=admin
-            - MONGO_INITDB_ROOT_PASSWORD=admin123
-        ports:
-            - "27017:27017"
-        volumes:
-            - mongo-data:/data/db
-    redis:
-        image: redis:7-alpine
-        container_name: redis
-        ports:
-            - "6379:6379"
-    redpanda:
-        image: docker.redpanda.com/redpandadata/redpanda:latest
-        container_name: redpanda
-        command: redpanda start --smp 1 --overprovisioned --node-id 0 --check=false
-        ports:
-            - "9092:9092"
-            - "9644:9644"
-        environment:
-            - REDPANDA_AUTO_CREATE_TOPICS=true
-    minio:
-        image: minio/minio:latest
-        container_name: minio
-        environment:
-            - MINIO_ROOT_USER=admin
-            - MINIO_ROOT_PASSWORD=admin123
-        command: server /data
-        ports:
-            - "9000:9000"
-            - "9001:9001"
-        volumes:
-            - minio-data:/data
-    vault:
-        image: vault:latest
-        container_name: vault
-        ports:
-            - "8200:8200"
-        environment:
-            - VAULT_DEV_ROOT_TOKEN_ID=root
-            - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
-        cap_add:
-            - IPC_LOCK
-    zipkin:
-        image: openzipkin/zipkin
-        container_name: zipkin
-        ports:
-            - "9411:9411"
-    prometheus:
-        image: prom/prometheus:latest
-        container_name: prometheus
-        ports:
-            - "9090:9090"
-        volumes:
-            - ./prometheus-lite.yaml:/etc/prometheus/prometheus.yaml:ro
-    loki:
-        image: grafana/loki:2.9.0
-        container_name: loki
-        command: -config.file=/etc/loki/local-config.yaml
-        ports:
-            - "3100:3100"
-    promtail:
-        image: grafana/promtail:2.9.0
-        container_name: promtail
-        volumes:
-            - /var/log:/var/log
-            - ./promtail-config.yaml:/etc/promtail/config.yaml
-        command: -config.file=/etc/promtail/config.yaml
-    grafana:
-        image: grafana/grafana:latest
-        container_name: grafana
-        depends_on:
-            - prometheus
-            - loki
-        ports:
-            - "3000:3000"
-        environment:
-            - GF_SECURITY_ADMIN_USER=admin
-            - GF_SECURITY_ADMIN_PASSWORD=admin
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    logging:
+      driver: "json-file"
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    logging:
+      driver: "json-file"
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    command: redpanda start --smp 1 --overprovisioned --node-id 0 --check=false
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    environment:
+      - REDPANDA_AUTO_CREATE_TOPICS=true
+    logging:
+      driver: "json-file"
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+    command: server /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    logging:
+      driver: "json-file"
+  vault:
+    image: vault:latest
+    container_name: vault
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    logging:
+      driver: "json-file"
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-lite.yaml:/etc/prometheus/prometheus.yaml:ro
+    logging:
+      driver: "json-file"
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    logging:
+      driver: "json-file"
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - /var/log:/var/log
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    logging:
+      driver: "json-file"
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+      - loki
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    logging:
+      driver: "json-file"
 volumes:
-    pgdata:
-    mongo-data:
-    minio-data:
+  pgdata:
+  mongo-data:
+  minio-data:

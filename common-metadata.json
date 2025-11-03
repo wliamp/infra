@@ -4,17 +4,58 @@
   "type": "object",
   "description": "Common metadata used across APIs call and events driven",
   "properties": {
-    "correlationId": { "type": "string", "format": "uuid" },
-    "requestId": { "type": "string", "format": "uuid" },
-    "traceId": { "type": "string" },
-    "spanId": { "type": "string" },
-    "timestamp": { "type": "string", "format": "date-time" },
-    "serviceName": { "type": "string" },
-    "environment": { "type": "string", "enum": ["dev", "staging", "prod"] },
-    "version": { "type": "string" },
-    "hostname": { "type": "string" },
-    "severity": { "type": "string", "enum": ["DEBUG", "INFO", "WARN", "ERROR"] },
-    "caller": { "type": "string" }
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "traceId": {
+      "type": "string"
+    },
+    "spanId": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "serviceName": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "staging",
+        "prod"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "hostname": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR"
+      ]
+    },
+    "caller": {
+      "type": "string"
+    }
   },
-  "required": ["correlationId", "timestamp", "serviceName", "environment"]
+  "required": [
+    "correlationId",
+    "timestamp",
+    "serviceName",
+    "environment"
+  ]
 }

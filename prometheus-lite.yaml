@@ -1,9 +1,16 @@
 global:
-    scrape_interval: 5s
+  scrape_interval: 5s
 scrape_configs:
-    -   job_name: 'spring-boot'
-        static_configs:
-            -   targets:
-                    - 'service-registry:8080'
-                    - 'config-server:8080'
-                    - 'api-gateway:8080'
+  - job_name: "app"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "banking-acquirer:8080"
+          - "banking-issuer:8080"
+          - "clearing-settlement-payment:8080"
+          - "compliance-regulatory-payment:8080"
+          - "fraud-risk:payment:8080"
+          - "payment-gateway:8080"
+          - "payment-processor:8080"
+          - "payment-card-network:8080"
+          - "shopping-merchant:8080"
